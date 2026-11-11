@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101416" />
+  <meta name="description" content="A tactile 3D chess duel where every capture steals a piece's power." />
+  <title>Crown — Power Swap Chess</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='56'%3E♔%3C/text%3E%3C/svg%3E" />
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Crown home"><span class="brand-mark">♔</span><span>CROWN<span class="brand-period">.</span></span></a>
+      <div class="top-center"><span class="live-dot"></span> LOCAL DUEL <span class="top-divider">/</span> <span id="move-count">MOVE 01</span></div>
+      <button class="icon-button help-button" id="rules-button" aria-label="How to play" title="How to play">?</button>
+    </header>
+
+    <section class="game-layout">
+      <section class="board-column" aria-label="Chess board">
+        <div class="board-topline">
+          <div class="player-chip" id="black-chip"><span class="player-token black-token">♟</span><div><strong>ONYX</strong><small>BLACK</small></div></div>
+          <div class="turn-label"><span class="turn-dot" id="turn-dot"></span><span id="turn-label">WHITE TO MOVE</span></div>
+        </div>
+        <div class="board-wrap">
+          <div class="board-frame">
+            <div class="board-coords coords-files" aria-hidden="true"><span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span></div>
+            <div class="board-coords coords-ranks" aria-hidden="true"><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span></div>
+            <div id="chess-stage" class="chess-stage" aria-label="Interactive 3D chessboard"></div>
+          </div>
+          <div class="board-caption"><span><i class="drag-icon">↗</i> DRAG TO ORBIT</span><span><i class="tap-icon">◎</i> TAP TO SELECT</span></div>
+        </div>
+        <div class="player-row">
+          <div class="player-chip" id="white-chip"><span class="player-token white-token">♙</span><div><strong>IVORY</strong><small>WHITE</small></div><span class="you-tag">YOU</span></div>
+          <div class="captured-strip"><span class="captured-label">TAKEN</span><span id="white-captured" class="captured-pieces" aria-label="Black pieces captured by White"></span><span class="capture-divider"></span><span id="black-captured" class="captured-pieces" aria-label="White pieces captured by Black"></span></div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="panel-kicker"><span class="sparkle">✳</span> A DIFFERENT KIND OF CHESS</div>
+        <h1>Power<br><em>changes</em><span class="title-period">.</span></h1>
+        <p class="intro-copy">Every capture is a transformation. Take a piece, inherit its power, and turn the board on its head.</p>
+
+        <div class="power-callout"><div class="callout-icon">⇄</div><div><strong>CAPTURE = SWAP</strong><p>Your piece takes the captured piece’s movement power.</p></div></div>
+
+        <div class="section-heading"><span>THE ROYAL COURT</span><span class="section-line"></span></div>
+        <div class="king-card"><div class="king-glyph">♔</div><div class="king-copy"><strong>THE GOLDEN KING</strong><span>One crown. Every power.</span></div><span class="gold-seal">✦</span></div>
+
+        <div class="status-card" id="status-card"><div class="status-icon" id="status-icon">✦</div><div><strong id="status-title">The board is yours</strong><span id="status-copy">Select a piece to see its moves.</span></div></div>
+
+        <div class="action-row">
+          <button class="action-button primary-action" id="new-game"><span>↻</span> NEW GAME</button>
+          <button class="action-button" id="undo-move" disabled><span>↶</span> UNDO</button>
+          <button class="action-button square-action" id="flip-board" aria-label="Rotate board" title="Rotate board">⤾</button>
+        </div>
+        <div class="move-history"><div class="section-heading"><span>MOVE LOG</span><span class="move-count-small" id="log-count">0 PLY</span></div><div id="move-log" class="move-log"><div class="empty-log">Your opening move starts here.</div></div></div>
+        <footer class="panel-footer"><span>BUILT FOR THE BOLD</span><span>♔ &nbsp; v1.0</span></footer>
+      </aside>
+    </section>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="promotion-dialog" class="dialog-backdrop" hidden><div class="dialog promotion-dialog"><button class="dialog-close" id="close-promotion" aria-label="Close">×</button><span class="panel-kicker">A PAWN REACHES THE THRONE</span><h2>Choose its new power</h2><div class="promotion-options" id="promotion-options"></div></div></div>
+    <div id="rules-dialog" class="dialog-backdrop" hidden><div class="dialog"><button class="dialog-close" id="close-rules" aria-label="Close">×</button><span class="panel-kicker">THE RULES OF CROWN</span><h2>Same board.<br><em>New powers.</em></h2><p>Play classic chess rules: take turns, protect your king, and checkmate to win.</p><p><strong>Every capture changes the game.</strong> The capturing piece takes on the captured piece’s movement power. Your king always keeps its royal king-step and cannot be captured; as a royal piece it also gains the stolen power. Kings glow gold so you always know where the crown is.</p><p>Tap a piece to see its legal moves. Tap a glowing square to move. A pawn reaching the far rank becomes a queen, rook, bishop, or knight.</p><button class="action-button primary-action rules-done" id="rules-done">GOT IT</button></div></div>
+  </main>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>
